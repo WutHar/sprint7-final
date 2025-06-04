@@ -3,7 +3,7 @@ package main
 import (
 	"net/http"
 	"net/http/httptest"
-
+	"strconv"
 	"strings"
 	"testing"
 
@@ -22,14 +22,67 @@ func TestCafeWhenOk(t *testing.T) {
 }
 
 func TestCafeNegative(t *testing.T) {
-	req := httptest.NewRequest(http.MethodGet, "/cafe?city=london", nil)
-	resp := httptest.NewRecorder()
-	mainHandle(resp, req)
+	requests := []struct {
+		url      string
+		wantCode int
+		wantBody string
+	}{
+		{
+			url:      "/cafe?city=london",
+			wantCode: http.StatusBadRequest,
+			wantBody: "unknown city",
+		},
+		{
+			url:      "/cafe?city=moscow&count=abc",
+			wantCode: http.StatusBadRequest,
+			wantBody: "incorrect count",
+		},
+	}
 
-	require.Equal(t, http.StatusBadRequest, resp.Code, "Код ответа должен быть 400 Bad Request для неизвестного города")
-	want := "unknown city"
-	assert.Equal(t, want, strings.TrimSpace(resp.Body.String()), "Неверное сообщение об ошибке для неизвестного города")
+	for _, tt := range requests {
+		req := httptest.NewRequest(http.MethodGet, tt.url, nil)
+		resp := httptest.NewRecorder()
+		mainHandle(resp, req)
+
+		require.Equal(t, tt.wantCode, resp.Code, "Код ответа для URL %s должен быть %d", tt.url, tt.wantCode)
+		assert.Equal(t, tt.wantBody, strings.TrimSpace(resp.Body.String()), "Тело ответа для URL %s должно быть '%s'", tt.url, tt.wantBody)
+	}
 }
+
+func TestCafeCount(t *testing.T) {
+	requests := []struct {
+		count int
+		city  string
+		want  int
+	}{
+		{count: 0, city: "moscow", want: 0},
+		{count: 1, city: "moscow", want: 1},
+		{count: 2, city: "moscow", want: 2},
+		{count: 100, city: "moscow", want: len(cafeList["moscow"])},
+		{count: 100, city: "tula", want: len(cafeList["tula"])},
+		{count: 2, city: "tula", want: 2},
+		{count: 0, city: "tula", want: 0},
+	}
+
+	for _, tt := range requests {
+		req := httptest.NewRequest(http.MethodGet, "/cafe?city="+tt.city+"&count="+strconv.Itoa(tt.count), nil)
+		resp := httptest.NewRecorder()
+		mainHandle(resp, req)
+
+		require.Equal(t, http.StatusOK, resp.Code, "Код ответа должен быть 200 OK для city=%s, count=%d", tt.city, tt.count)
+
+		body := strings.TrimSpace(resp.Body.String())
+		var got []string
+		if body != "" {
+			got = strings.Split(body, ",")
+		} else {
+			got = []string{}
+		}
+
+		assert.Len(t, got, tt.want, "Ожидалось %d кафе для city=%s, count=%d, получено %d", tt.want, tt.city, tt.count, len(got))
+	}
+}
+
 func TestCafeSearch(t *testing.T) {
 	requests := []struct {
 		search    string
@@ -44,7 +97,6 @@ func TestCafeSearch(t *testing.T) {
 	}
 
 	for _, tt := range requests {
-
 		req := httptest.NewRequest(http.MethodGet, "/cafe?city=moscow&search="+tt.search, nil)
 		resp := httptest.NewRecorder()
 		mainHandle(resp, req)

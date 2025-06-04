@@ -14,6 +14,7 @@ var cafeList = map[string][]string{
 
 func mainHandle(w http.ResponseWriter, req *http.Request) {
 	var err error
+
 	count := 25
 	countStr := req.FormValue("count")
 	if countStr != "" {
@@ -55,12 +56,10 @@ func min(a, b int) int {
 }
 
 func main() {
-
 	http.HandleFunc(`/cafe`, mainHandle)
 
 	err := http.ListenAndServe(":8080", nil)
 	if err != nil {
-
 		panic(err)
 	}
 }
