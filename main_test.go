@@ -37,6 +37,11 @@ func TestCafeNegative(t *testing.T) {
 			wantCode: http.StatusBadRequest,
 			wantBody: "incorrect count",
 		},
+		{
+			url:      "/cafe?city=moscow&count=-1",
+			wantCode: http.StatusBadRequest,
+			wantBody: "incorrect count",
+		},
 	}
 
 	for _, tt := range requests {
