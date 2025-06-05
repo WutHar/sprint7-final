@@ -48,13 +48,6 @@ func mainHandle(w http.ResponseWriter, req *http.Request) {
 	io.WriteString(w, answer)
 }
 
-func min(a, b int) int {
-	if a < b {
-		return a
-	}
-	return b
-}
-
 func main() {
 	http.HandleFunc(`/cafe`, mainHandle)
 

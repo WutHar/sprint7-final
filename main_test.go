@@ -16,9 +16,9 @@ func TestCafeWhenOk(t *testing.T) {
 	resp := httptest.NewRecorder()
 	mainHandle(resp, req)
 
-	require.Equal(t, http.StatusOK, resp.Code, "Код ответа должен быть 200 OK")
+	require.Equal(t, http.StatusOK, resp.Code)
 	want := "Мир кофе,Сладкоежка,Кофе и завтраки,Сытый студент,Ложка и вилка"
-	assert.Equal(t, want, strings.TrimSpace(resp.Body.String()), "Неверное тело ответа для успешного запроса")
+	assert.Equal(t, want, strings.TrimSpace(resp.Body.String()))
 }
 
 func TestCafeNegative(t *testing.T) {
@@ -65,6 +65,7 @@ func TestCafeCount(t *testing.T) {
 	}
 
 	for _, tt := range requests {
+
 		req := httptest.NewRequest(http.MethodGet, "/cafe?city="+tt.city+"&count="+strconv.Itoa(tt.count), nil)
 		resp := httptest.NewRecorder()
 		mainHandle(resp, req)
